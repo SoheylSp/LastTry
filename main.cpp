@@ -7,6 +7,7 @@
 #include <QStringList>
 #include <QGeoCoordinate>
 #include "addlineclass.h"
+#include "addpolygonclass.h"
 
 QVariantMap readArguments(QStringList arguments){
 
@@ -67,6 +68,7 @@ int main(int argc, char *argv[])
     QVariantMap myArguments = readArguments(a.arguments());
 
     QString myFilepath ;
+    int numPoints{0};//Initialize numPoints to 0
 
 
     if(myArguments.contains("addLine")){
@@ -75,7 +77,7 @@ int main(int argc, char *argv[])
             return -1;
         }
 
-       myFilepath = myArguments["filepath"].toString();
+       myFilepath = myArguments["filePath"].toString();
 
         if(myArguments.contains("coordinates")){
 
@@ -124,7 +126,74 @@ int main(int argc, char *argv[])
 
         }
 
+}else if (myArguments.contains("addPolygon")) {
+
+
+        if(! myArguments.contains("filePath")){
+
+            qCritical()<<"Missing filePath argments";
+            return -1 ;
+        }
+
+        myFilepath = myArguments["filePath"].toString();
+
+        if(myArguments.contains("numPoints")){
+
+            numPoints=myArguments["numPoints"].toInt() ;//Get the number of points for the polygon
+
+        }else {
+
+            qCritical()<<"Missing numPoints argument";
+            return -1 ;
 }
+
+        if(myArguments.contains("coordinates")){
+
+            QVariantList coordinates = myArguments["coordinates"].toList() ;
+
+            if(coordinates.length() >= numPoints){
+
+                QList<QGeoCoordinate> geoCoordinates ;
+
+                //Converting QVariantList to QList<QGeoCoordinate>
+
+                for(QVariant coordinateString:coordinates){
+
+                    QStringList coordinateParts = coordinateString.toString().split(",");
+                    if(coordinateParts.length() == 2){
+
+                        double lat = coordinateParts[0].toDouble() ;
+                        double lon = coordinateParts[1].toDouble() ;
+
+                        QGeoCoordinate geoCoord(lat,lon);
+                        if(geoCoord.isValid()){
+                            geoCoordinates.append(geoCoord) ;
+                        }else {
+
+                            qCritical()<<"Provided coordinatesis not valid " << coordinateString;
+                            return -1 ;
+}
+
+                    }else {
+
+                        qCritical()<<"Invalid coordinate format"<<coordinateParts;
+                        }
+
+                }
+
+                AddPolyGonClass addPolygonObject ;
+                addPolygonObject.addPolygon(numPoints,geoCoordinates,myFilepath) ;
+
+            }else {
+
+                qCritical()<<"Insufficient number of coordinates provided" ;
+                return -1 ;
+}
+
+        }
+
+
+    }
 
 
 
