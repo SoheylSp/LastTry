@@ -5,34 +5,46 @@ AddLineClass::AddLineClass()
 
 }
 
-void AddLineClass::addLine(QString &filepath, QList<QGeoCoordinate> myCoordinates)
+void AddLineClass::addLine(QString &filePath, QList<QGeoCoordinate> myCoordinates)
 {
 
-    QFile file(filepath) ;
-    if(! file.open(QIODevice::ReadWrite|QIODevice::Text)){
-        qCritical() << "Faild to Open file" ;
-    }
+   QJsonObject geojson = createFeatureObject(myCoordinates);
+   geojsonIO.writeFeatureToFile(geojson,filePath);
+}
 
-    QJsonObject feature     ;
-    QJsonObject geometry    ;
-    QJsonObject properties  ;
-    QJsonArray coordinates  ;
+void AddLineClass::appendToLine(QString &filePath, QList<QGeoCoordinate> myCoordinates)
+{
 
-    feature["type"]  = "Feature"        ;
-    feature["properties"] = properties  ;
-    geometry["type"] = "LineString"     ;
-
-    for(const QGeoCoordinate& myGeoCoordinates : myCoordinates){
-
-        QJsonArray coordinate ;
-        coordinate.append(myGeoCoordinates.longitude()) ;
-        coordinate.append(myGeoCoordinates.latitude())  ;
-        coordinates.append(coordinate) ;
-
-
-    }
-
-    geometry["coordinates"] = coordinates ;
-    feature["geometry"] = geometry        ;
+    QJsonObject geojson = createFeatureObject(myCoordinates) ;
+    geojsonIO.writeFeatureToFile(geojson,filePath);
 
 }
+
+
+QJsonObject AddLineClass::createFeatureObject(const QList<QGeoCoordinate> &coordinates)
+{
+    QJsonObject feature ;
+    QJsonObject geometry;
+    QJsonObject properties;
+    QJsonArray jsonCoordinates;
+
+    feature["type"] = "Feature" ;
+    properties["name"] = "Line" ;
+    feature["properties"]=properties;
+    geometry["type"] = "LineString" ;
+
+    for (const QGeoCoordinate& myGeoCoordinates : coordinates){
+
+        QJsonArray coordinate ;
+        coordinate.append(myGeoCoordinates.longitude());
+        coordinate.append(myGeoCoordinates.latitude()) ;
+        jsonCoordinates.append(coordinate);
+
+    }
+
+    geometry["coordinates"] = jsonCoordinates ;
+    feature["geometry"] = geometry ;
+
+    return feature ;
+}
+
